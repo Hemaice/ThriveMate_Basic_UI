@@ -9,7 +9,7 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, Save, Camera, LogOut, Edit3 } from 'lucide-react-native';
+import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, Save, Camera, LogOut, CreditCard as Edit3 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 
