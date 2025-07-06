@@ -9,13 +9,13 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, Save, Camera, LogOut, CreditCard as Edit3 } from 'lucide-react-native';
+import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, Camera, LogOut, Edit3 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileScreen() {
-  const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState('https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop');
+  const [editingField, setEditingField] = useState<string | null>(null);
   
   // These would come from registration/authentication context
   const [userInfo, setUserInfo] = useState({
@@ -27,10 +27,17 @@ export default function ProfileScreen() {
     bio: 'Passionate learner focused on personal growth and wellness. Always striving to achieve new goals and maintain a balanced lifestyle.',
   });
 
-  const handleSave = () => {
-    setIsEditing(false);
-    Alert.alert('Success', 'Profile updated successfully!');
-    // Here you would typically save to a backend
+  const handleFieldEdit = (field: string) => {
+    if (field === 'email' || field === 'name' || field === 'joinDate') {
+      return; // These fields are not editable
+    }
+    setEditingField(field);
+  };
+
+  const handleFieldSave = (field: string, value: string) => {
+    setUserInfo(prev => ({ ...prev, [field]: value }));
+    setEditingField(null);
+    Alert.alert('Success', 'Field updated successfully!');
   };
 
   const handleBack = () => {
@@ -57,6 +64,7 @@ export default function ProfileScreen() {
 
       if (!result.canceled && result.assets[0]) {
         setProfileImage(result.assets[0].uri);
+        Alert.alert('Success', 'Profile photo updated!');
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to pick image. Please try again.');
@@ -81,6 +89,73 @@ export default function ProfileScreen() {
     );
   };
 
+  const renderEditableField = (
+    field: string,
+    label: string,
+    value: string,
+    icon: React.ReactNode,
+    editable: boolean = true,
+    keyboardType: any = 'default',
+    multiline: boolean = false
+  ) => {
+    const isEditing = editingField === field;
+    const isClickable = editable && !isEditing;
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.infoItem,
+          isEditing && styles.editingItem,
+          isClickable && styles.clickableItem
+        ]}
+        onPress={() => editable && handleFieldEdit(field)}
+        disabled={isEditing || !editable}
+        activeOpacity={editable ? 0.7 : 1}
+      >
+        <View style={styles.infoIcon}>
+          {icon}
+        </View>
+        <View style={styles.infoContent}>
+          <Text style={styles.infoLabel}>{label}</Text>
+          {isEditing ? (
+            <TextInput
+              style={[styles.infoInput, multiline && styles.multilineInput]}
+              value={value}
+              onChangeText={(text) => setUserInfo(prev => ({ ...prev, [field]: text }))}
+              onBlur={() => handleFieldSave(field, value)}
+              placeholder={`Enter your ${label.toLowerCase()}`}
+              placeholderTextColor="#9CA3AF"
+              keyboardType={keyboardType}
+              multiline={multiline}
+              numberOfLines={multiline ? 4 : 1}
+              textAlignVertical={multiline ? 'top' : 'center'}
+              autoFocus={true}
+              returnKeyType={multiline ? 'default' : 'done'}
+              blurOnSubmit={!multiline}
+            />
+          ) : (
+            <View style={styles.valueContainer}>
+              <Text style={[styles.infoValue, multiline && styles.multilineValue]}>
+                {value}
+              </Text>
+              {editable && (
+                <View style={styles.editHint}>
+                  <Edit3 size={14} color="#9CA3AF" />
+                  <Text style={styles.editHintText}>Tap to edit</Text>
+                </View>
+              )}
+              {!editable && (
+                <Text style={styles.infoNote}>
+                  {field === 'email' ? 'Cannot be changed' : 'From registration'}
+                </Text>
+              )}
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -91,139 +166,117 @@ export default function ProfileScreen() {
           <ArrowLeft size={24} color="#4F46E5" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity 
-          style={styles.editButton}
-          onPress={isEditing ? handleSave : () => setIsEditing(true)}
-        >
-          {isEditing ? (
-            <Save size={24} color="#10B981" />
-          ) : (
-            <Edit3 size={24} color="#4F46E5" />
-          )}
-        </TouchableOpacity>
+        <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.profileImageContainer}>
-          <View style={styles.profileImageWrapper}>
+          <TouchableOpacity 
+            style={styles.profileImageWrapper}
+            onPress={handleImagePicker}
+            activeOpacity={0.8}
+          >
             <Image
               source={{ uri: profileImage }}
               style={styles.profileImage}
             />
-            <TouchableOpacity 
-              style={styles.cameraButton}
-              onPress={handleImagePicker}
-            >
+            <View style={styles.cameraButton}>
               <Camera size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
+            </View>
+            <View style={styles.imageEditHint}>
+              <Text style={styles.imageEditHintText}>Tap to change photo</Text>
+            </View>
+          </TouchableOpacity>
           <Text style={styles.userName}>{userInfo.name}</Text>
           <Text style={styles.userTitle}>ThriveMate Member</Text>
         </View>
 
         <View style={styles.infoContainer}>
           <Text style={styles.sectionTitle}>Personal Information</Text>
+          <Text style={styles.sectionSubtitle}>Tap any field to edit it directly</Text>
           
-          <View style={styles.infoItem}>
-            <View style={styles.infoIcon}>
-              <User size={20} color="#4F46E5" />
-            </View>
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Full Name</Text>
-              <Text style={styles.infoValue}>{userInfo.name}</Text>
-              <Text style={styles.infoNote}>From registration</Text>
-            </View>
-          </View>
+          {renderEditableField(
+            'name',
+            'Full Name',
+            userInfo.name,
+            <User size={20} color="#4F46E5" />,
+            false
+          )}
 
-          <View style={styles.infoItem}>
-            <View style={styles.infoIcon}>
-              <Mail size={20} color="#4F46E5" />
-            </View>
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>{userInfo.email}</Text>
-              <Text style={styles.infoNote}>Cannot be changed</Text>
-            </View>
-          </View>
+          {renderEditableField(
+            'email',
+            'Email',
+            userInfo.email,
+            <Mail size={20} color="#4F46E5" />,
+            false,
+            'email-address'
+          )}
 
-          <View style={[styles.infoItem, isEditing && styles.editableItem]}>
-            <View style={styles.infoIcon}>
-              <Phone size={20} color="#4F46E5" />
-            </View>
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Phone</Text>
-              {isEditing ? (
-                <TextInput
-                  style={styles.infoInput}
-                  value={userInfo.phone}
-                  onChangeText={(text) => setUserInfo({...userInfo, phone: text})}
-                  placeholder="Enter your phone number"
-                  placeholderTextColor="#9CA3AF"
-                  keyboardType="phone-pad"
-                  returnKeyType="done"
-                  blurOnSubmit={true}
-                />
-              ) : (
-                <Text style={styles.infoValue}>{userInfo.phone}</Text>
-              )}
-            </View>
-          </View>
+          {renderEditableField(
+            'phone',
+            'Phone',
+            userInfo.phone,
+            <Phone size={20} color="#4F46E5" />,
+            true,
+            'phone-pad'
+          )}
 
-          <View style={[styles.infoItem, isEditing && styles.editableItem]}>
-            <View style={styles.infoIcon}>
-              <MapPin size={20} color="#4F46E5" />
-            </View>
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Location</Text>
-              {isEditing ? (
-                <TextInput
-                  style={styles.infoInput}
-                  value={userInfo.location}
-                  onChangeText={(text) => setUserInfo({...userInfo, location: text})}
-                  placeholder="Enter your location"
-                  placeholderTextColor="#9CA3AF"
-                  returnKeyType="done"
-                  blurOnSubmit={true}
-                />
-              ) : (
-                <Text style={styles.infoValue}>{userInfo.location}</Text>
-              )}
-            </View>
-          </View>
+          {renderEditableField(
+            'location',
+            'Location',
+            userInfo.location,
+            <MapPin size={20} color="#4F46E5" />,
+            true
+          )}
 
-          <View style={styles.infoItem}>
-            <View style={styles.infoIcon}>
-              <Calendar size={20} color="#4F46E5" />
-            </View>
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Member Since</Text>
-              <Text style={styles.infoValue}>{userInfo.joinDate}</Text>
-            </View>
-          </View>
+          {renderEditableField(
+            'joinDate',
+            'Member Since',
+            userInfo.joinDate,
+            <Calendar size={20} color="#4F46E5" />,
+            false
+          )}
         </View>
 
         <View style={styles.bioContainer}>
           <Text style={styles.sectionTitle}>About Me</Text>
-          {isEditing ? (
-            <View style={styles.bioEditContainer}>
+          <Text style={styles.sectionSubtitle}>Tap to edit your bio</Text>
+          
+          <TouchableOpacity
+            style={[
+              styles.bioItem,
+              editingField === 'bio' && styles.editingBioItem,
+              editingField !== 'bio' && styles.clickableBioItem
+            ]}
+            onPress={() => handleFieldEdit('bio')}
+            disabled={editingField === 'bio'}
+            activeOpacity={0.7}
+          >
+            {editingField === 'bio' ? (
               <TextInput
                 style={styles.bioInput}
                 value={userInfo.bio}
-                onChangeText={(text) => setUserInfo({...userInfo, bio: text})}
-                multiline={true}
-                numberOfLines={6}
+                onChangeText={(text) => setUserInfo(prev => ({ ...prev, bio: text }))}
+                onBlur={() => handleFieldSave('bio', userInfo.bio)}
                 placeholder="Tell us about yourself..."
                 placeholderTextColor="#9CA3AF"
+                multiline={true}
+                numberOfLines={6}
                 textAlignVertical="top"
+                autoFocus={true}
                 returnKeyType="default"
                 blurOnSubmit={true}
               />
-            </View>
-          ) : (
-            <View style={styles.bioReadContainer}>
-              <Text style={styles.bioText}>{userInfo.bio}</Text>
-            </View>
-          )}
+            ) : (
+              <View>
+                <Text style={styles.bioText}>{userInfo.bio}</Text>
+                <View style={styles.bioEditHint}>
+                  <Edit3 size={14} color="#9CA3AF" />
+                  <Text style={styles.editHintText}>Tap to edit bio</Text>
+                </View>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
         <View style={styles.logoutContainer}>
@@ -264,8 +317,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
     color: '#1F2937',
   },
-  editButton: {
-    padding: 8,
+  headerSpacer: {
+    width: 40, // Same width as back button for centering
   },
   content: {
     flex: 1,
@@ -293,6 +346,7 @@ const styles = StyleSheet.create({
   profileImageWrapper: {
     position: 'relative',
     marginBottom: 16,
+    alignItems: 'center',
   },
   profileImage: {
     width: 120,
@@ -303,8 +357,8 @@ const styles = StyleSheet.create({
   },
   cameraButton: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
+    bottom: 8,
+    right: 8,
     backgroundColor: '#4F46E5',
     borderRadius: 20,
     width: 40,
@@ -313,6 +367,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 3,
     borderColor: '#FFFFFF',
+  },
+  imageEditHint: {
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+  },
+  imageEditHintText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: '#6B7280',
   },
   userName: {
     fontSize: 24,
@@ -332,6 +398,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: 'Inter-SemiBold',
     color: '#1F2937',
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#6B7280',
     marginBottom: 16,
   },
   infoItem: {
@@ -352,10 +424,16 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  editableItem: {
+  clickableItem: {
+    borderColor: '#D1D5DB',
+    backgroundColor: '#FAFBFC',
+  },
+  editingItem: {
     borderColor: '#4F46E5',
     borderWidth: 2,
     backgroundColor: '#F8FAFC',
+    shadowColor: '#4F46E5',
+    shadowOpacity: 0.1,
   },
   infoIcon: {
     marginRight: 16,
@@ -368,20 +446,38 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Inter-Medium',
     color: '#6B7280',
-    marginBottom: 4,
+    marginBottom: 6,
+  },
+  valueContainer: {
+    flex: 1,
   },
   infoValue: {
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#1F2937',
     lineHeight: 22,
+    marginBottom: 4,
+  },
+  multilineValue: {
+    lineHeight: 24,
+  },
+  editHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  editHintText: {
+    fontSize: 11,
+    fontFamily: 'Inter-Regular',
+    color: '#9CA3AF',
+    marginLeft: 4,
   },
   infoNote: {
     fontSize: 11,
     fontFamily: 'Inter-Regular',
     color: '#9CA3AF',
-    marginTop: 2,
     fontStyle: 'italic',
+    marginTop: 2,
   },
   infoInput: {
     fontSize: 16,
@@ -392,14 +488,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: '#4F46E5',
     minHeight: 40,
     lineHeight: 20,
+  },
+  multilineInput: {
+    minHeight: 100,
+    paddingTop: 12,
+    lineHeight: 24,
   },
   bioContainer: {
     marginBottom: 32,
   },
-  bioReadContainer: {
+  bioItem: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
@@ -414,36 +515,46 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  bioEditContainer: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    borderWidth: 2,
+  clickableBioItem: {
+    borderColor: '#D1D5DB',
+    backgroundColor: '#FAFBFC',
+  },
+  editingBioItem: {
     borderColor: '#4F46E5',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    borderWidth: 2,
+    backgroundColor: '#F8FAFC',
+    shadowColor: '#4F46E5',
     shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   bioText: {
     fontSize: 16,
     fontFamily: 'Inter-Regular',
-    color: '#6B7280',
+    color: '#1F2937',
     lineHeight: 24,
+    marginBottom: 8,
+  },
+  bioEditHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    alignSelf: 'center',
   },
   bioInput: {
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#1F2937',
-    padding: 16,
     minHeight: 120,
     lineHeight: 24,
+    textAlignVertical: 'top',
     backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    margin: 2,
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#4F46E5',
   },
   logoutContainer: {
     marginBottom: 40,
