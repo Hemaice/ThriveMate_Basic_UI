@@ -9,7 +9,7 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, Save, Camera, LogOut } from 'lucide-react-native';
+import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, Save, Camera, LogOut, Edit3 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -95,7 +95,11 @@ export default function ProfileScreen() {
           style={styles.editButton}
           onPress={isEditing ? handleSave : () => setIsEditing(true)}
         >
-          <Save size={24} color={isEditing ? "#10B981" : "#4F46E5"} />
+          {isEditing ? (
+            <Save size={24} color="#10B981" />
+          ) : (
+            <Edit3 size={24} color="#4F46E5" />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -127,6 +131,7 @@ export default function ProfileScreen() {
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Full Name</Text>
               <Text style={styles.infoValue}>{userInfo.name}</Text>
+              <Text style={styles.infoNote}>From registration</Text>
             </View>
           </View>
 
@@ -137,10 +142,11 @@ export default function ProfileScreen() {
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Email</Text>
               <Text style={styles.infoValue}>{userInfo.email}</Text>
+              <Text style={styles.infoNote}>Cannot be changed</Text>
             </View>
           </View>
 
-          <View style={styles.infoItem}>
+          <View style={[styles.infoItem, isEditing && styles.editableItem]}>
             <View style={styles.infoIcon}>
               <Phone size={20} color="#4F46E5" />
             </View>
@@ -151,8 +157,10 @@ export default function ProfileScreen() {
                   style={styles.infoInput}
                   value={userInfo.phone}
                   onChangeText={(text) => setUserInfo({...userInfo, phone: text})}
+                  placeholder="Enter your phone number"
                   placeholderTextColor="#9CA3AF"
                   keyboardType="phone-pad"
+                  autoFocus={false}
                 />
               ) : (
                 <Text style={styles.infoValue}>{userInfo.phone}</Text>
@@ -160,7 +168,7 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          <View style={styles.infoItem}>
+          <View style={[styles.infoItem, isEditing && styles.editableItem]}>
             <View style={styles.infoIcon}>
               <MapPin size={20} color="#4F46E5" />
             </View>
@@ -171,7 +179,9 @@ export default function ProfileScreen() {
                   style={styles.infoInput}
                   value={userInfo.location}
                   onChangeText={(text) => setUserInfo({...userInfo, location: text})}
+                  placeholder="Enter your location"
                   placeholderTextColor="#9CA3AF"
+                  autoFocus={false}
                 />
               ) : (
                 <Text style={styles.infoValue}>{userInfo.location}</Text>
@@ -193,17 +203,23 @@ export default function ProfileScreen() {
         <View style={styles.bioContainer}>
           <Text style={styles.sectionTitle}>About Me</Text>
           {isEditing ? (
-            <TextInput
-              style={styles.bioInput}
-              value={userInfo.bio}
-              onChangeText={(text) => setUserInfo({...userInfo, bio: text})}
-              multiline
-              numberOfLines={4}
-              placeholderTextColor="#9CA3AF"
-              placeholder="Tell us about yourself..."
-            />
+            <View style={styles.bioEditContainer}>
+              <TextInput
+                style={styles.bioInput}
+                value={userInfo.bio}
+                onChangeText={(text) => setUserInfo({...userInfo, bio: text})}
+                multiline
+                numberOfLines={6}
+                placeholder="Tell us about yourself..."
+                placeholderTextColor="#9CA3AF"
+                textAlignVertical="top"
+                autoFocus={false}
+              />
+            </View>
           ) : (
-            <Text style={styles.bioText}>{userInfo.bio}</Text>
+            <View style={styles.bioReadContainer}>
+              <Text style={styles.bioText}>{userInfo.bio}</Text>
+            </View>
           )}
         </View>
 
@@ -262,6 +278,14 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   profileImageWrapper: {
     position: 'relative',
@@ -309,7 +333,7 @@ const styles = StyleSheet.create({
   },
   infoItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
@@ -325,8 +349,13 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
+  editableItem: {
+    borderColor: '#4F46E5',
+    borderWidth: 2,
+  },
   infoIcon: {
     marginRight: 16,
+    marginTop: 2,
   },
   infoContent: {
     flex: 1,
@@ -341,40 +370,71 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#1F2937',
+    lineHeight: 22,
+  },
+  infoNote: {
+    fontSize: 11,
+    fontFamily: 'Inter-Regular',
+    color: '#9CA3AF',
+    marginTop: 2,
+    fontStyle: 'italic',
   },
   infoInput: {
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#1F2937',
-    borderBottomWidth: 1,
-    borderBottomColor: '#4F46E5',
-    paddingBottom: 4,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    minHeight: 44,
   },
   bioContainer: {
     marginBottom: 32,
+  },
+  bioReadContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  bioEditContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#4F46E5',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   bioText: {
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#6B7280',
     lineHeight: 24,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
   },
   bioInput: {
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#1F2937',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#4F46E5',
-    textAlignVertical: 'top',
-    minHeight: 100,
+    minHeight: 120,
+    lineHeight: 24,
   },
   logoutContainer: {
     marginBottom: 40,
