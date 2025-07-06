@@ -9,14 +9,18 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, CreditCard as Edit3, Save, Camera, LogOut } from 'lucide-react-native';
+import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, Save, Camera, LogOut } from 'lucide-react-native';
 import { router } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileScreen() {
   const [isEditing, setIsEditing] = useState(false);
+  const [profileImage, setProfileImage] = useState('https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop');
+  
+  // These would come from registration/authentication context
   const [userInfo, setUserInfo] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
+    name: 'John Doe', // From registration
+    email: 'john.doe@example.com', // From registration - non-editable
     phone: '+1 (555) 123-4567',
     location: 'New York, NY',
     joinDate: 'January 2024',
@@ -25,11 +29,38 @@ export default function ProfileScreen() {
 
   const handleSave = () => {
     setIsEditing(false);
+    Alert.alert('Success', 'Profile updated successfully!');
     // Here you would typically save to a backend
   };
 
   const handleBack = () => {
     router.back();
+  };
+
+  const handleImagePicker = async () => {
+    try {
+      // Request permission
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Alert.alert('Permission Required', 'Permission to access camera roll is required!');
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setProfileImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    }
   };
 
   const handleLogout = () => {
@@ -64,11 +95,7 @@ export default function ProfileScreen() {
           style={styles.editButton}
           onPress={isEditing ? handleSave : () => setIsEditing(true)}
         >
-          {isEditing ? (
-            <Save size={24} color="#10B981" />
-          ) : (
-            <Edit3 size={24} color="#4F46E5" />
-          )}
+          <Save size={24} color={isEditing ? "#10B981" : "#4F46E5"} />
         </TouchableOpacity>
       </View>
 
@@ -76,32 +103,18 @@ export default function ProfileScreen() {
         <View style={styles.profileImageContainer}>
           <View style={styles.profileImageWrapper}>
             <Image
-              source={{ uri: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop' }}
+              source={{ uri: profileImage }}
               style={styles.profileImage}
             />
-            {isEditing && (
-              <TouchableOpacity style={styles.cameraButton}>
-                <Camera size={20} color="#FFFFFF" />
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity 
+              style={styles.cameraButton}
+              onPress={handleImagePicker}
+            >
+              <Camera size={20} color="#FFFFFF" />
+            </TouchableOpacity>
           </View>
           <Text style={styles.userName}>{userInfo.name}</Text>
           <Text style={styles.userTitle}>ThriveMate Member</Text>
-        </View>
-
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>24</Text>
-            <Text style={styles.statLabel}>Goals Achieved</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>156</Text>
-            <Text style={styles.statLabel}>Days Active</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>89%</Text>
-            <Text style={styles.statLabel}>Success Rate</Text>
-          </View>
         </View>
 
         <View style={styles.infoContainer}>
@@ -113,16 +126,7 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Full Name</Text>
-              {isEditing ? (
-                <TextInput
-                  style={styles.infoInput}
-                  value={userInfo.name}
-                  onChangeText={(text) => setUserInfo({...userInfo, name: text})}
-                  placeholderTextColor="#9CA3AF"
-                />
-              ) : (
-                <Text style={styles.infoValue}>{userInfo.name}</Text>
-              )}
+              <Text style={styles.infoValue}>{userInfo.name}</Text>
             </View>
           </View>
 
@@ -132,17 +136,7 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Email</Text>
-              {isEditing ? (
-                <TextInput
-                  style={styles.infoInput}
-                  value={userInfo.email}
-                  onChangeText={(text) => setUserInfo({...userInfo, email: text})}
-                  placeholderTextColor="#9CA3AF"
-                  keyboardType="email-address"
-                />
-              ) : (
-                <Text style={styles.infoValue}>{userInfo.email}</Text>
-              )}
+              <Text style={styles.infoValue}>{userInfo.email}</Text>
             </View>
           </View>
 
@@ -211,40 +205,6 @@ export default function ProfileScreen() {
           ) : (
             <Text style={styles.bioText}>{userInfo.bio}</Text>
           )}
-        </View>
-
-        <View style={styles.achievementsContainer}>
-          <Text style={styles.sectionTitle}>Recent Achievements</Text>
-          
-          <View style={styles.achievementItem}>
-            <View style={styles.achievementIcon}>
-              <Text style={styles.achievementEmoji}>🎯</Text>
-            </View>
-            <View style={styles.achievementContent}>
-              <Text style={styles.achievementTitle}>Goal Crusher</Text>
-              <Text style={styles.achievementDescription}>Completed 10 goals this month</Text>
-            </View>
-          </View>
-
-          <View style={styles.achievementItem}>
-            <View style={styles.achievementIcon}>
-              <Text style={styles.achievementEmoji}>📚</Text>
-            </View>
-            <View style={styles.achievementContent}>
-              <Text style={styles.achievementTitle}>Study Streak</Text>
-              <Text style={styles.achievementDescription}>7 days of consistent studying</Text>
-            </View>
-          </View>
-
-          <View style={styles.achievementItem}>
-            <View style={styles.achievementIcon}>
-              <Text style={styles.achievementEmoji}>💪</Text>
-            </View>
-            <View style={styles.achievementContent}>
-              <Text style={styles.achievementTitle}>Wellness Warrior</Text>
-              <Text style={styles.achievementDescription}>Maintained healthy habits for 30 days</Text>
-            </View>
-          </View>
         </View>
 
         <View style={styles.logoutContainer}>
@@ -338,39 +298,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: '#6B7280',
   },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 32,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: '#4F46E5',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-    color: '#6B7280',
-    textAlign: 'center',
-  },
   infoContainer: {
     marginBottom: 32,
   },
@@ -448,53 +375,6 @@ const styles = StyleSheet.create({
     borderColor: '#4F46E5',
     textAlignVertical: 'top',
     minHeight: 100,
-  },
-  achievementsContainer: {
-    marginBottom: 32,
-  },
-  achievementItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  achievementIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  achievementEmoji: {
-    fontSize: 24,
-  },
-  achievementContent: {
-    flex: 1,
-  },
-  achievementTitle: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  achievementDescription: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
   },
   logoutContainer: {
     marginBottom: 40,
