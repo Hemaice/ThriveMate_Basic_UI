@@ -9,7 +9,7 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, Save, Camera, LogOut, CreditCard as Edit3 } from 'lucide-react-native';
+import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, Save, Camera, LogOut, Edit3 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -160,7 +160,8 @@ export default function ProfileScreen() {
                   placeholder="Enter your phone number"
                   placeholderTextColor="#9CA3AF"
                   keyboardType="phone-pad"
-                  autoFocus={false}
+                  returnKeyType="done"
+                  blurOnSubmit={true}
                 />
               ) : (
                 <Text style={styles.infoValue}>{userInfo.phone}</Text>
@@ -181,7 +182,8 @@ export default function ProfileScreen() {
                   onChangeText={(text) => setUserInfo({...userInfo, location: text})}
                   placeholder="Enter your location"
                   placeholderTextColor="#9CA3AF"
-                  autoFocus={false}
+                  returnKeyType="done"
+                  blurOnSubmit={true}
                 />
               ) : (
                 <Text style={styles.infoValue}>{userInfo.location}</Text>
@@ -208,12 +210,13 @@ export default function ProfileScreen() {
                 style={styles.bioInput}
                 value={userInfo.bio}
                 onChangeText={(text) => setUserInfo({...userInfo, bio: text})}
-                multiline
+                multiline={true}
                 numberOfLines={6}
                 placeholder="Tell us about yourself..."
                 placeholderTextColor="#9CA3AF"
                 textAlignVertical="top"
-                autoFocus={false}
+                returnKeyType="default"
+                blurOnSubmit={true}
               />
             </View>
           ) : (
@@ -352,6 +355,7 @@ const styles = StyleSheet.create({
   editableItem: {
     borderColor: '#4F46E5',
     borderWidth: 2,
+    backgroundColor: '#F8FAFC',
   },
   infoIcon: {
     marginRight: 16,
@@ -383,12 +387,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#1F2937',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
-    padding: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderWidth: 1,
     borderColor: '#D1D5DB',
-    minHeight: 44,
+    minHeight: 40,
+    lineHeight: 20,
   },
   bioContainer: {
     marginBottom: 32,
@@ -409,7 +415,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   bioEditContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
     borderRadius: 12,
     borderWidth: 2,
     borderColor: '#4F46E5',
@@ -435,6 +441,9 @@ const styles = StyleSheet.create({
     padding: 16,
     minHeight: 120,
     lineHeight: 24,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    margin: 2,
   },
   logoutContainer: {
     marginBottom: 40,
